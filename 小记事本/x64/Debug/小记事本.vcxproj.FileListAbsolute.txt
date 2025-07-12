@@ -1,0 +1,4 @@
+C:\Users\Sanco\source\repos\小记事本\x64\Debug\WebView2Loader.dll
+C:\Users\Sanco\source\repos\小记事本\小记事本\x64\Debug\小记事本.vcxproj.MdMergeInputs.cache
+C:\Users\Sanco\source\repos\小记事本\小记事本\x64\Debug\小记事本.vcxproj.cppwinrt_plat.cache
+C:\Users\Sanco\source\repos\小记事本\小记事本\x64\Debug\小记事本.vcxproj.cppwinrt_comp.cache

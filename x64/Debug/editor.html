@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双模式编辑器</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Huiwen-HKHei", "SimSun", serif;
+            background-color: #f9f9f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ccc;
+            background-color: white;
+            position: relative;
+        }
+
+        .editor {
+            width: 100%;
+            height: 100%;
+            padding: 60px 20px 20px 20px;
+            box-sizing: border-box;
+            font-size: 24px;
+            line-height: 1.8;
+            letter-spacing: 0.1em;
+            border: none;
+            outline: none;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+            /* 竖排模式样式 */
+            .editor.vertical {
+                writing-mode: vertical-rl;
+                text-orientation: upright;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            /* 横排模式样式 */
+            .editor.horizontal {
+                writing-mode: horizontal-tb;
+                text-orientation: mixed;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .editor:focus {
+                background-color: #fffef7;
+            }
+
+            /* 竖排模式滚动条 */
+            .editor.vertical::-webkit-scrollbar {
+                height: 8px;
+                width: 8px;
+            }
+
+            /* 横排模式滚动条 */
+            .editor.horizontal::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            .editor::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+
+            .editor::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+            }
+
+                .editor::-webkit-scrollbar-thumb:hover {
+                    background: #555;
+                }
+
+        /* 工具栏 */
+        .toolbar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .mode-toggle {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+            .mode-toggle:hover {
+                background: #005999;
+            }
+
+        /* 隐藏文本样式 */
+        .hidden-text {
+            background-color: #e0e0e0;
+            color: #666;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+            .hidden-text.revealed {
+                background-color: #fff3cd;
+                color: #856404;
+            }
+
+        .toolbar-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+            .toolbar-toggle:hover {
+                background: rgba(255, 255, 255, 1);
+            }
+
+        /* 模式指示器 */
+        .mode-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar" id="toolbar">
+            <div class="toolbar-controls">
+                <button class="mode-toggle" onclick="toggleMode()" id="modeToggle">
+                    切换到横排
+                </button>
+                <span id="toolbarText">竖排版模式 | 按 Ctrl+H 切换隐藏文本显示</span>
+            </div>
+        </div>
+        <div class="toolbar-toggle" id="toolbarToggle" onclick="toggleToolbar()">
+            收起
+        </div>
+        <div class="editor vertical"
+             contenteditable="true"
+             id="editor"
+             placeholder="在此输入文本...">
+        </div>
+        <div class="mode-indicator" id="modeIndicator">
+            竖排模式
+        </div>
+    </div>
+
+    <script>
+        let editor = document.getElementById('editor');
+        let showHiddenText = false;
+        let toolbarMinimized = false;
+        let isVerticalMode = true;
+        let currentContent = '';
+
+        // 模式切换功能
+        function toggleMode() {
+            const modeToggle = document.getElementById('modeToggle');
+            const toolbarText = document.getElementById('toolbarText');
+            const modeIndicator = document.getElementById('modeIndicator');
+
+            // 保存当前内容
+            currentContent = getRichTextContent();
+
+            if (isVerticalMode) {
+                // 切换到横排模式
+                editor.className = 'editor horizontal';
+                modeToggle.textContent = '切换到竖排';
+                toolbarText.textContent = '横排版模式 | 按 Ctrl+H 切换隐藏文本显示';
+                modeIndicator.textContent = '横排模式';
+                isVerticalMode = false;
+
+                // 通知主程序模式已切换
+                notifyModeChange('horizontal');
+            } else {
+                // 切换到竖排模式
+                editor.className = 'editor vertical';
+                modeToggle.textContent = '切换到横排';
+                toolbarText.textContent = '竖排版模式 | 按 Ctrl+H 切换隐藏文本显示';
+                modeIndicator.textContent = '竖排模式';
+                isVerticalMode = true;
+
+                // 通知主程序模式已切换
+                notifyModeChange('vertical');
+            }
+        }
+
+        // 通知主程序模式切换
+        function notifyModeChange(mode) {
+            let message = JSON.stringify({
+                type: 'modeChanged',
+                mode: mode,
+                content: currentContent
+            });
+            window.chrome.webview.postMessage(message);
+        }
+
+        // 工具栏切换功能
+        function toggleToolbar() {
+            const toolbar = document.getElementById('toolbar');
+            const toggle = document.getElementById('toolbarToggle');
+
+            toolbarMinimized = !toolbarMinimized;
+
+            if (toolbarMinimized) {
+                toolbar.style.display = 'none';
+                toggle.textContent = '显示';
+                editor.style.paddingTop = '20px';
+            } else {
+                toolbar.style.display = 'block';
+                toggle.textContent = '收起';
+                editor.style.paddingTop = '60px';
+            }
+        }
+
+        // 监听来自C++的消息
+        window.chrome.webview.addEventListener('message', function (event) {
+            let data;
+            try {
+                data = JSON.parse(event.data);
+            } catch (e) {
+                console.error('解析消息失败:', e);
+                return;
+            }
+
+            switch (data.command) {
+                case 'init':
+                    sendReadyMessage();
+                    break;
+                case 'setContent':
+                    setEditorContent(data.payload);
+                    break;
+                case 'getContent':
+                    sendContentToHost();
+                    break;
+                case 'toggleHidden':
+                    toggleHiddenText();
+                    break;
+                case 'clear':
+                    editor.innerHTML = '';
+                    break;
+                case 'setMode':
+                    setMode(data.payload);
+                    break;
+                case 'getClipboardContent':
+                    sendClipboardContentToHost();
+                    break;
+                case 'pasteContent':
+                    insertContentAtCursor(data.payload);
+                    break;
+            }
+        });
+
+        // 设置编辑器模式
+        function setMode(mode) {
+            if (mode === 'vertical' && !isVerticalMode) {
+                toggleMode();
+            } else if (mode === 'horizontal' && isVerticalMode) {
+                toggleMode();
+            }
+        }
+
+        // 发送就绪消息
+        function sendReadyMessage() {
+            let message = JSON.stringify({
+                type: 'ready',
+                mode: isVerticalMode ? 'vertical' : 'horizontal',
+                timestamp: Date.now()
+            });
+            window.chrome.webview.postMessage(message);
+        }
+
+        // 设置编辑器内容
+        function setEditorContent(content) {
+            if (content) {
+                if (content.includes('<') && content.includes('>')) {
+                    // HTML内容
+                    editor.innerHTML = content;
+                } else {
+                    // 纯文本内容
+                    let processedContent = processHiddenText(content);
+                    editor.innerHTML = processedContent;
+                }
+            } else {
+                editor.innerHTML = '';
+            }
+        }
+
+        // 处理隐藏文本
+        function processHiddenText(text) {
+            return text.replace(/\[HIDDEN\](.*?)\[\/HIDDEN\]/g, function (match, content) {
+                return '<span class="hidden-text" data-original="' + escapeHtml(content) + '">' +
+                    (showHiddenText ? escapeHtml(content) : '***') +
+                    '</span>';
+            });
+        }
+
+        // HTML转义
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 发送内容到宿主程序
+        function sendContentToHost() {
+            let content = getRichTextContent();
+            let message = JSON.stringify({
+                type: 'contentResponse',
+                content: content,
+                mode: isVerticalMode ? 'vertical' : 'horizontal'
+            });
+            window.chrome.webview.postMessage(message);
+        }
+
+        // 获取富文本内容
+        function getRichTextContent() {
+            return editor.innerHTML;
+        }
+
+        // 发送剪贴板内容
+        function sendClipboardContentToHost() {
+            let selectedText = window.getSelection().toString();
+            let contentToCopy = selectedText || getPlainTextContent();
+            let message = JSON.stringify({
+                type: 'clipboardContentResponse',
+                content: contentToCopy
+            });
+            window.chrome.webview.postMessage(message);
+        }
+
+        // 插入内容
+        function insertContentAtCursor(content) {
+            editor.focus();
+            try {
+                document.execCommand('insertText', false, content);
+            } catch (e) {
+                console.error('Failed to insert content:', e);
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(content));
+                    selection.collapseToEnd();
+                } else {
+                    editor.textContent += content;
+                }
+            }
+
+            // 触发内容变化事件
+            setTimeout(() => {
+                let message = JSON.stringify({
+                    type: 'contentChanged',
+                    content: getRichTextContent(),
+                    mode: isVerticalMode ? 'vertical' : 'horizontal'
+                });
+                window.chrome.webview.postMessage(message);
+            }, 100);
+        }
+
+        // 获取纯文本内容
+        function getPlainTextContent() {
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editor.innerHTML;
+
+            let hiddenSpans = tempDiv.querySelectorAll('.hidden-text');
+            hiddenSpans.forEach(function (span) {
+                let originalContent = span.getAttribute('data-original') || span.textContent;
+                let hiddenTagNode = document.createTextNode('[HIDDEN]' + originalContent + '[/HIDDEN]');
+                span.parentNode.replaceChild(hiddenTagNode, span);
+            });
+
+            return tempDiv.innerText || tempDiv.textContent || '';
+        }
+
+        // 切换隐藏文本显示
+        function toggleHiddenText() {
+            showHiddenText = !showHiddenText;
+            let hiddenElements = document.querySelectorAll('.hidden-text');
+
+            hiddenElements.forEach(function (element) {
+                if (showHiddenText) {
+                    element.classList.add('revealed');
+                    element.textContent = element.getAttribute('data-original') || '***';
+                } else {
+                    element.classList.remove('revealed');
+                    element.textContent = '***';
+                }
+            });
+        }
+
+        // 鼠标滚轮事件处理
+        editor.addEventListener('wheel', function (e) {
+            if (isVerticalMode) {
+                e.preventDefault();
+                editor.scrollLeft += e.deltaY;
+            }
+            // 横排模式使用默认滚动行为
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                toggleHiddenText();
+            }
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                toggleToolbar();
+            }
+            if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                toggleMode();
+            }
+        });
+
+        // 内容变化监听
+        editor.addEventListener('input', function () {
+            clearTimeout(window.contentChangeTimer);
+            window.contentChangeTimer = setTimeout(function () {
+                let message = JSON.stringify({
+                    type: 'contentChanged',
+                    content: getRichTextContent(),
+                    mode: isVerticalMode ? 'vertical' : 'horizontal'
+                });
+                window.chrome.webview.postMessage(message);
+            }, 500);
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            sendReadyMessage();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+// app.rc
+#include "resource.h"
+
+// 以 RCDATA 形式嵌入 TTF 文件
+IDR_MYFONT RCDATA "汇文港黑v1.001.ttf"
+
+// *** 在这里添加您的菜单资源定义 ***
+// 假设您的主菜单ID是 IDR_MAINMENU (您可以根据实际情况命名)
+IDR_MAINMENU MENU // 这个ID需要是唯一的，并且在您的代码中加载菜单时会用到
+BEGIN
+POPUP "&File"
+BEGIN
+MENUITEM "&New\tCtrl+N", IDM_NEW
+MENUITEM "&Open...\tCtrl+O", IDM_OPEN
+MENUITEM "&Save\tCtrl+S", IDM_SAVE
+MENUITEM "Save &As...", IDM_SAVEAS
+MENUITEM SEPARATOR
+MENUITEM "E&xit", IDM_EXIT
+END
+POPUP "&Edit"
+BEGIN
+MENUITEM "&Undo\tCtrl+Z", IDM_UNDO
+MENUITEM "&Cut\tCtrl+X", IDM_CUT
+MENUITEM "&Copy\tCtrl+C", IDM_COPY
+MENUITEM "&Paste\tCtrl+V", IDM_PASTE
+MENUITEM "&Delete\tDel", IDM_DELETE
+MENUITEM SEPARATOR
+MENUITEM "Select &All\tCtrl+A", IDM_SELECTALL
+END
+// *** 新增 View 菜单 ***
+POPUP "&View"
+BEGIN
+MENUITEM "&RichEdit Mode", IDM_VIEW_RICHEDIT // 切换回 RichEdit 模式
+MENUITEM "&WebView Mode", IDM_VIEW_WEBVIEW  // 切换到 WebView 模式
+END
+POPUP "&Help"
+BEGIN
+MENUITEM "&About...", IDM_ABOUT
+END
+END

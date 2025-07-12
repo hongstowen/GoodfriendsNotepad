@@ -1,0 +1,13 @@
+﻿  sample_notepad.c
+C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(2,9): warning C4005: “UNICODE”: 宏重定义
+      C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(2,9):
+      之前在命令行上声明的“UNICODE”
+  
+C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(3,9): warning C4005: “_UNICODE”: 宏重定义
+      C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(3,9):
+      之前在命令行上声明的“_UNICODE”
+  
+C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(327,33): warning C4267: “+=”: 从“size_t”转换到“long”，可能丢失数据
+C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(362,33): warning C4267: “+=”: 从“size_t”转换到“long”，可能丢失数据
+C:\Users\Sanco\source\repos\小记事本\小记事本\sample_notepad.c(639,5): warning C4013: “InitCommonControls”未定义；假设外部返回 int
+  小记事本.vcxproj -> C:\Users\Sanco\source\repos\小记事本\x64\Debug\小记事本.exe
